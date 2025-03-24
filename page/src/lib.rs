@@ -6,7 +6,7 @@ pub use binder::{AutoBind, Binder};
 
 mod insert;
 use cosmic::{Element, Task};
-use downcast_rs::{impl_downcast, Downcast};
+use downcast_rs::{Downcast, impl_downcast};
 pub use insert::Insert;
 
 pub mod section;

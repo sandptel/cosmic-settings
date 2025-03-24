@@ -3,7 +3,7 @@
 
 use cosmic::iced::{Alignment, Length};
 use cosmic::widget::{self, button, icon, settings, text};
-use cosmic::{theme, Apply, Element, Task};
+use cosmic::{Apply, Element, Task, theme};
 use cosmic_config::{ConfigGet, ConfigSet};
 use cosmic_settings_config::shortcuts::{self, Action, Binding, Shortcuts};
 use cosmic_settings_page as page;

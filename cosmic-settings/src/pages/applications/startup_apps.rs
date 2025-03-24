@@ -1,6 +1,6 @@
 use cosmic::iced::{Alignment, Length};
 use cosmic::widget::{button, icon, settings, text, vertical_space};
-use cosmic::{widget, Apply, Element, Task};
+use cosmic::{Apply, Element, Task, widget};
 use cosmic_settings_page::section::Entity;
 use cosmic_settings_page::{self as page, Content, Info, Section};
 use freedesktop_desktop_entry::DesktopEntry;
@@ -66,9 +66,11 @@ enum Context {
 impl Into<Vec<PathBuf>> for DirectoryType {
     fn into(self) -> Vec<PathBuf> {
         match self {
-            DirectoryType::User => vec![dirs::config_dir()
-                .expect("config dir not found")
-                .join("autostart")],
+            DirectoryType::User => vec![
+                dirs::config_dir()
+                    .expect("config dir not found")
+                    .join("autostart"),
+            ],
         }
     }
 }

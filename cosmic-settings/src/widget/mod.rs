@@ -8,10 +8,10 @@ use cosmic::iced::{Alignment, Length};
 use cosmic::iced_core::text::Wrapping;
 use cosmic::widget::color_picker::ColorPickerUpdate;
 use cosmic::widget::{
-    self, button, column, container, divider, horizontal_space, icon, row, settings, text,
-    vertical_space, ColorPickerModel,
+    self, ColorPickerModel, button, column, container, divider, horizontal_space, icon, row,
+    settings, text, vertical_space,
 };
-use cosmic::{theme, Apply, Element};
+use cosmic::{Apply, Element, theme};
 use cosmic_settings_page as page;
 
 pub fn color_picker_context_view<'a, Message: Clone + 'static>(

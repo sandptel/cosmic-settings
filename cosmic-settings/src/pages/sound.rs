@@ -4,12 +4,12 @@
 use std::{collections::BTreeMap, time::Duration};
 
 use cosmic::{
-    iced::{window, Alignment, Length},
+    Element, Task,
+    iced::{Alignment, Length, window},
     surface,
     widget::{self, settings},
-    Element, Task,
 };
-use cosmic_settings_page::{self as page, section, Section};
+use cosmic_settings_page::{self as page, Section, section};
 use cosmic_settings_subscriptions::{pipewire, pulse};
 use futures::StreamExt;
 use indexmap::IndexMap;

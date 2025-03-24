@@ -1,6 +1,7 @@
 // Copyright 2023 System76 <info@system76.com>
 // SPDX-License-Identifier: GPL-3.0-only
 
+use crate::PageCommands;
 use crate::config::Config;
 #[cfg(feature = "page-accessibility")]
 use crate::pages::accessibility;
@@ -21,25 +22,24 @@ use crate::pages::sound;
 use crate::pages::{self, system, time};
 use crate::subscription::desktop_files;
 use crate::widget::{page_title, search_header};
-use crate::PageCommands;
 use cosmic::app::context_drawer::ContextDrawer;
 #[cfg(feature = "wayland")]
 use cosmic::cctk::{sctk::output::OutputInfo, wayland_client::protocol::wl_output::WlOutput};
 use cosmic::iced::Subscription;
 use cosmic::widget::{self, button, row, text_input};
 use cosmic::{
+    Element,
     app::{Core, Task},
     iced::{
-        self,
+        self, Length,
         event::{self, PlatformSpecific},
-        window, Length,
+        window,
     },
     prelude::*,
     surface,
     widget::{
         column, container, icon, id_container, nav_bar, scrollable, segmented_button, settings,
     },
-    Element,
 };
 #[cfg(feature = "wayland")]
 use cosmic_panel_config::CosmicPanelConfig;

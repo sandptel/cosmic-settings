@@ -4,12 +4,12 @@
 mod getent;
 
 use cosmic::{
+    Apply, Element,
     dialog::file_chooser,
     iced::{Alignment, Length},
     widget::{self, column, icon, settings, text},
-    Apply, Element,
 };
-use cosmic_settings_page::{self as page, section, Section};
+use cosmic_settings_page::{self as page, Section, section};
 use slab::Slab;
 use slotmap::SlotMap;
 use std::{
