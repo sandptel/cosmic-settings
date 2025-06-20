@@ -1,4 +1,5 @@
 use cosmic::app::ContextDrawer;
+use cosmic::cosmic_theme::palette::WithAlpha;
 use cosmic::iced::Vector;
 use cosmic::iced::clipboard::dnd::{
     DndAction, DndDestinationRectangle, DndEvent, OfferEvent, SourceEvent,
@@ -562,15 +563,16 @@ impl<'a> TryFrom<Cow<'a, Path>> for Applet<'static> {
 
     fn try_from(path: Cow<'a, Path>) -> Result<Self, Self::Error> {
         let content = std::fs::read_to_string(path.as_ref())?;
-        let entry = DesktopEntry::from_str(path.as_ref(), &content, None::<&[&str]>)?;
+        let languages = freedesktop_desktop_entry::get_languages_from_env();
+        let entry = DesktopEntry::from_str(path.as_ref(), &content, Some(&languages))?;
         if entry.desktop_entry("X-CosmicApplet").is_none() {
             anyhow::bail!("Not an applet");
         }
 
         Ok(Self {
             id: Cow::from(entry.id().to_string()),
-            name: Cow::from(entry.name::<&str>(&[]).unwrap_or_default().to_string()),
-            description: Cow::from(entry.comment::<&str>(&[]).unwrap_or_default().to_string()),
+            name: Cow::from(entry.name(&languages).unwrap_or_default().to_string()),
+            description: Cow::from(entry.comment(&languages).unwrap_or_default().to_string()),
             icon: Cow::from(entry.icon().unwrap_or_default().to_string()),
             path: Cow::from(path.into_owned()),
         })
@@ -641,7 +643,10 @@ impl<'a, Message: 'static + Clone> AppletReorderList<'a, Message> {
             .map(|info| {
                 let id_clone = info.id.to_string();
                 let is_dragged = active_dnd.as_ref().map_or(false, |dnd| dnd.id == info.id);
-                container(
+
+                let content = if is_dragged {
+                    row::with_capacity(0).height(Length::Fixed(32.0))
+                } else {
                     row::with_children(vec![
                         icon::from_name("grip-lines-symbolic")
                             .symbolic(true)
@@ -664,20 +669,29 @@ impl<'a, Message: 'static + Clone> AppletReorderList<'a, Message> {
                             .into(),
                     ])
                     .spacing(space_xs)
-                    .align_y(Alignment::Center),
-                )
-                .width(Length::Fill)
-                .padding(8)
-                .class(theme::Container::Custom(Box::new(move |theme| {
-                    let mut style = container::Catalog::style(theme, &theme::Container::Primary);
-                    style.border.radius = 8.0.into();
-                    if is_dragged {
-                        style.border.color = theme.cosmic().accent_color().into();
-                        style.border.width = 2.0;
-                    }
-                    style
-                })))
-                .into()
+                    .align_y(Alignment::Center)
+                };
+
+                container(content)
+                    .padding(8)
+                    .width(Length::Fill)
+                    .class(theme::Container::Custom(Box::new(move |theme| {
+                        let mut style =
+                            container::Catalog::style(theme, &theme::Container::Primary);
+                        style.border.radius = theme.cosmic().radius_s().into();
+                        if is_dragged {
+                            style.border.color = theme.cosmic().accent_color().into();
+                            style.border.width = 2.0;
+                            style.background = Some(
+                                Color::from(theme.cosmic().accent_color().with_alpha(0.1)).into(),
+                            );
+                        } else {
+                            style.background =
+                                Some(Color::from(theme.cosmic().bg_component_color()).into());
+                        }
+                        style
+                    })))
+                    .into()
             })
             .collect::<Vec<_>>();
 
@@ -702,7 +716,7 @@ impl<'a, Message: 'static + Clone> AppletReorderList<'a, Message> {
                 .padding(8)
                 .class(theme::Container::Custom(Box::new(move |theme| {
                     let mut style = container::Catalog::style(theme, &theme::Container::Primary);
-                    style.border.radius = 8.0.into();
+                    style.border.radius = theme.cosmic().radius_s().into();
                     style.border.color = theme.cosmic().bg_divider().into();
                     style.border.width = 2.0;
                     style.background = Some(Color::TRANSPARENT.into());
@@ -817,7 +831,11 @@ pub fn dnd_icon(info: Applet<'static>, layout: &layout::Layout) -> AppletReorder
                     .spacing(4.0)
                     .width(Length::Fill)
                     .push(text::body(info.name))
-                    .push(text::caption(info.description))
+                    .push_maybe(if info.description.is_empty() {
+                        None
+                    } else {
+                        Some(text::caption(info.description))
+                    })
                     .into(),
                 button::icon(icon::from_name("edit-delete-symbolic"))
                     .extra_small()
@@ -830,7 +848,10 @@ pub fn dnd_icon(info: Applet<'static>, layout: &layout::Layout) -> AppletReorder
         .padding(8)
         .class(theme::Container::Custom(Box::new(move |theme| {
             let mut style = container::Catalog::style(theme, &theme::Container::Primary);
-            style.border.radius = 8.0.into();
+            style.background = Some(Color::from(theme.cosmic().bg_component_color()).into());
+            style.border.radius = theme.cosmic().radius_s().into();
+            style.border.color = theme.cosmic().bg_divider().into();
+            style.border.width = 1.0;
             style
         })))
         .into(),

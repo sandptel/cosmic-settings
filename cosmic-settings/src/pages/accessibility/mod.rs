@@ -13,7 +13,9 @@ use cosmic_settings_page::{
     self as page, Insert,
     section::{self, Section},
 };
-use cosmic_settings_subscriptions::accessibility::{DBusRequest, DBusUpdate};
+use cosmic_settings_subscriptions::accessibility::{
+    DBusRequest, DBusUpdate, subscription as a11y_subscription,
+};
 use cosmic_settings_subscriptions::cosmic_a11y_manager;
 use num_traits::FromPrimitive;
 use slotmap::SlotMap;
@@ -88,6 +90,18 @@ pub enum Message {
     ScreenReaderEnabled(bool),
 }
 
+impl From<Message> for crate::pages::Message {
+    fn from(message: Message) -> Self {
+        crate::pages::Message::Accessibility(message)
+    }
+}
+
+impl From<Message> for crate::app::Message {
+    fn from(message: Message) -> Self {
+        crate::app::Message::PageMessage(message.into())
+    }
+}
+
 impl page::Page<crate::pages::Message> for Page {
     fn set_id(&mut self, entity: page::Entity) {
         self.entity = entity;
@@ -150,6 +164,13 @@ impl page::Page<crate::pages::Message> for Page {
 
         cosmic::Task::none()
     }
+
+    fn subscription(
+        &self,
+        _core: &cosmic::Core,
+    ) -> cosmic::iced::Subscription<crate::pages::Message> {
+        a11y_subscription().map(|m| super::Message::Accessibility(Message::DBusUpdate(m)))
+    }
 }
 
 impl page::AutoBind<crate::pages::Message> for Page {
@@ -181,11 +202,12 @@ pub fn vision() -> section::Section<crate::pages::Message> {
             settings::section()
                 .title(&section.title)
                 .add(
-                    cosmic::Element::from(
-                        settings::item::builder(&descriptions[screen_reader])
-                            .toggler(page.reader_enabled, Message::ScreenReaderEnabled),
-                    )
-                    .map(crate::pages::Message::Accessibility),
+                    settings::item::builder(&descriptions[screen_reader]).toggler(
+                        page.reader_enabled,
+                        |enabled| {
+                            crate::pages::Message::from(Message::ScreenReaderEnabled(enabled))
+                        },
+                    ),
                 )
                 .add({
                     let (magnifier_entity, _magnifier_info) = binder
@@ -209,66 +231,57 @@ pub fn vision() -> section::Section<crate::pages::Message> {
                         text::body(status_text).wrapping(Wrapping::Word),
                         page.wayland_available
                             .is_some()
-                            .then_some(crate::pages::Message::Page(magnifier_entity)),
+                            .then_some(crate::pages::Message::Page(magnifier_entity).into()),
                     )
                 })
                 .add(
-                    cosmic::Element::from(
-                        settings::item::builder(&descriptions[high_contrast])
-                            .toggler(page.theme.is_high_contrast, Message::HighContrast),
-                    )
-                    .map(crate::pages::Message::Accessibility),
+                    settings::item::builder(&descriptions[high_contrast])
+                        .toggler(page.theme.is_high_contrast, |enable| {
+                            Message::HighContrast(enable).into()
+                        }),
                 )
                 .add(
-                    cosmic::Element::from(
-                        settings::item::builder(&descriptions[invert_colors]).control(
-                            toggler(page.screen_inverted).on_toggle_maybe(
-                                page.wayland_available
-                                    .is_some_and(|ver| ver >= 2)
-                                    .then_some(Message::SetScreenInverted),
-                            ),
+                    settings::item::builder(&descriptions[invert_colors]).control(
+                        toggler(page.screen_inverted).on_toggle_maybe(
+                            page.wayland_available
+                                .is_some_and(|ver| ver >= 2)
+                                .then_some(|set| Message::SetScreenInverted(set).into()),
                         ),
-                    )
-                    .map(crate::pages::Message::Accessibility),
+                    ),
                 )
-                .add({
-                    cosmic::Element::from(
-                        settings::item::builder(&descriptions[color_filters]).control(
-                            toggler(page.screen_filter_active).on_toggle_maybe(
-                                page.wayland_available
-                                    .is_some_and(|ver| ver >= 2)
-                                    .then_some(Message::SetScreenFilterActive),
-                            ),
+                .add(
+                    settings::item::builder(&descriptions[color_filters]).control(
+                        toggler(page.screen_filter_active).on_toggle_maybe(
+                            page.wayland_available
+                                .is_some_and(|ver| ver >= 2)
+                                .then_some(|set| Message::SetScreenFilterActive(set).into()),
                         ),
-                    )
-                    .map(crate::pages::Message::Accessibility)
-                })
+                    ),
+                )
                 .add({
                     let selections = if page.screen_filter_selection == ColorFilter::Unknown {
                         &page.screen_filter_selections
                     } else {
                         &page.screen_filter_selections[0..4]
                     };
-                    cosmic::Element::from(
-                        settings::item::builder(&descriptions[color_filter_type]).control(
-                            dropdown::popup_dropdown(
-                                selections,
-                                Some(page.screen_filter_selection as usize),
-                                move |idx| {
-                                    let filter = ColorFilter::from_usize(idx).unwrap_or_default();
-                                    Message::SetScreenFilterSelection(filter)
-                                },
-                                cosmic::iced::window::Id::RESERVED,
-                                Message::Surface,
-                                |a| {
-                                    crate::app::Message::PageMessage(
-                                        crate::pages::Message::Accessibility(a),
-                                    )
-                                },
-                            ),
-                        ),
-                    )
-                    .map(crate::pages::Message::Accessibility)
+
+                    let dropdown = dropdown::popup_dropdown::<
+                        _,
+                        crate::pages::Message,
+                        crate::pages::Message,
+                    >(
+                        selections,
+                        Some(page.screen_filter_selection as usize),
+                        move |idx| {
+                            let filter = ColorFilter::from_usize(idx).unwrap_or_default();
+                            Message::SetScreenFilterSelection(filter).into()
+                        },
+                        cosmic::iced::window::Id::RESERVED,
+                        |action| Message::Surface(action).into(),
+                        |a| a,
+                    );
+
+                    settings::item::builder(&descriptions[color_filter_type]).control(dropdown)
                 })
                 .into()
         })

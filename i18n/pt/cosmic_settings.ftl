@@ -103,8 +103,7 @@ style = Estilo
     .slightly-round = Ligeiramente redondo
     .square = Quadrado
 
-# interface density left out for now
-window-management = Gestão de janelas
+window-management-appearance = Gestão de janelas
     .active-hint = Tamanho da sugestão da janela ativa
     .gaps = Espaços à volta das janelas em mosaico
 

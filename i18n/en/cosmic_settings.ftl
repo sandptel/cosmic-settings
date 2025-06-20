@@ -203,10 +203,13 @@ fit-to-screen = Fit to Screen
 open-new-folder = Open new folder
 recent-folders = Recent Folders
 
-x-minutes = { $number } minutes
-x-hours = { $number ->
-    [1] 1 hour
-    *[other] { $number } hours
+x-minutes = { $number } { $number ->
+    [one] minute
+    *[other] minutes
+}
+x-hours = { $number } { $number ->
+    [one] hour
+    *[other] hours
 }
 never = Never
 
@@ -689,6 +692,7 @@ system-shortcut = System
     .play-pause = Play/Pause
     .play-next = Next track
     .play-prev = Previous track
+    .poweroff = Power off
     .screenshot = Take a screenshot
     .terminal = Open a terminal
     .volume-lower = Decrease audio output volume

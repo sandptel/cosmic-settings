@@ -272,7 +272,7 @@ interface-density = Interface Density
     .compact = Compatta
     .spacious = Spaziosa
 
-window-management = Gestione finestre
+window-management-appearance = Gestione finestre
     .active-hint = Dimensione bordo finestra attiva
     .gaps = Spaziatura finestre in modalità tiling
 
@@ -571,10 +571,6 @@ keyboard-special-char = Immissione caratteri speciali
 keyboard-typing-assist = Digitazione
     .repeat-rate = Ripeti ritmo
     .repeat-delay = Ripeti ritardo
-
-added = Aggiunto
-type-to-search = Digita per cercare...
-show-extended-input-sources = Mostra
 
 added = Aggiunto
 type-to-search = Digita per cercare...

@@ -270,7 +270,7 @@ interface-density = Felület sűrűsége
     .compact = Kompakt
     .spacious = Tágas
 
-window-management = Ablakkezelés
+window-management-appearance = Ablakkezelés
     .active-hint = Aktív ablak kiemelésének mérete
     .gaps = Rések a csempézett ablakok körül
 
