@@ -3,7 +3,7 @@
 
 pub mod shortcuts;
 pub mod sway;
-
+use tracing::info;
 use std::cmp;
 
 use cosmic::{
@@ -445,13 +445,10 @@ impl page::Page<crate::pages::Message> for Page {
 impl Page {
     pub fn update(&mut self, message: Message) -> Task<crate::app::Message> {
         // Execute Sway commands if we're running under Sway
-        // if let Err(err) = sway::execute_sway_keyboard_commands(&message, self) {
-        //     tracing::warn!(?err, "Failed to execute Sway keyboard command");
-        // }
-
-        let sway_log = sway::execute_sway_keyboard_commands(&message, self);
-        println!("Keyboard Sway Changes: {:?}",sway_log);
-
+        if let Err(err) = sway::execute_sway_keyboard_commands(&message, self) {
+            tracing::warn!(?err, "Failed to execute Sway keyboard command");
+        }
+        
         match message {
             Message::InputSourceSearch(search) => {
                 self.input_source_search = search;

@@ -3,8 +3,21 @@ use std::error::Error;
 use cosmic_comp_config::NumlockState;
 use crate::pages::input::keyboard::Context;
 pub type SwayResult<T = ()> = Result<T, Box<dyn Error>>;
-
+use tracing::info;
 use super::{Message, Page, SpecialKey};
+
+// Macro to handle Sway command execution with logging
+macro_rules! execute_sway_cmd {
+    ($page:expr, $cmd:expr, $success_msg:expr) => {
+        match $page.sway_connection().run_command($cmd.clone()) {
+            Ok(_) => info!("{} via: swaymsg {}", $success_msg, &$cmd),
+            Err(e) => {
+                tracing::error!("Failed to execute command: {}", e);
+                return Err(e.into());
+            }
+        }
+    };
+}
 
 pub trait KeyboardMethods {
     /// Gets a mutable reference to the sway connection
@@ -21,12 +34,12 @@ pub fn execute_sway_keyboard_commands(message: &Message, page: &mut Page) -> Swa
     match message {
         Message::SetRepeatKeysDelay(delay) => {
             let cmd = format!("input type:keyboard repeat_delay {}", delay);
-            page.sway_connection().run_command(cmd)?;
+            execute_sway_cmd!(page, cmd, format!("Set keyboard repeat delay to {}ms", delay));
         }
 
         Message::SetRepeatKeysRate(rate) => {
             let cmd = format!("input type:keyboard repeat_rate {}", rate);
-            page.sway_connection().run_command(cmd)?;
+            execute_sway_cmd!(page, cmd, format!("Set keyboard repeat rate to {} keys/second", rate));
         }
 
         Message::SetNumlockState(_numlock_state) => {
@@ -37,6 +50,7 @@ pub fn execute_sway_keyboard_commands(message: &Message, page: &mut Page) -> Swa
 
         Message::SpecialCharacterSelect(option) => {
             if let Some(Context::SpecialCharacter(special_key)) = &page.context {
+                let special_key_clone = *special_key; // Clone the value to avoid borrowing issues
                 // Build new options string
                 let current_options = page.xkb.options.as_deref().unwrap_or_default();
                 let prefix = special_key.prefix();
@@ -48,14 +62,13 @@ pub fn execute_sway_keyboard_commands(message: &Message, page: &mut Page) -> Swa
                     .chain(option.iter().copied())
                     .filter(|opt| !opt.is_empty())
                     .collect();
-                
                 let options_string = new_options.join(",");
                 let cmd = if options_string.is_empty() {
                     "input type:keyboard xkb_options \"\"".to_string()
                 } else {
                     format!("input type:keyboard xkb_options \"{}\"", options_string)
                 };
-                page.sway_connection().run_command(cmd)?;
+                execute_sway_cmd!(page, cmd, format!("Updated XKB options for {:?}", special_key_clone));
             }
         }
 
@@ -112,15 +125,16 @@ fn update_sway_layouts(page: &mut Page) -> SwayResult {
         
         // Set layouts
         let layout_cmd = format!("input type:keyboard xkb_layout \"{}\"", layout_string);
-        page.sway_connection().run_command(layout_cmd)?;
+        execute_sway_cmd!(page, layout_cmd, format!("Updated keyboard layouts to [{}]", layout_string));
         
         // Set variants if any non-empty variants exist
         if variants.iter().any(|v| !v.is_empty()) {
             let variant_cmd = format!("input type:keyboard xkb_variant \"{}\"", variant_string);
-            page.sway_connection().run_command(variant_cmd)?;
+            execute_sway_cmd!(page, variant_cmd, format!("Updated keyboard variants to [{}]", variant_string));
         }
     }
     
     Ok(())
 }
+
 

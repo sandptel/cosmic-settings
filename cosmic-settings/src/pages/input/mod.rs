@@ -1,6 +1,6 @@
 // Copyright 2023 System76 <info@system76.com>
 // SPDX-License-Identifier: GPL-3.0-only
-
+use tracing::info;
 use crate::app;
 use cosmic::{
     Task,
@@ -106,8 +106,9 @@ impl Page {
     #[allow(clippy::too_many_lines)]
     pub fn update(&mut self, message: Message) -> Task<app::Message> {
         // let mut connection = &mut self.connection;
-        let sway_log = sway::execute_sway_commands(&message, self);
-        println!("Pointer Sway Changes: {:?}",sway_log);
+        if let Err(err) = sway::execute_sway_pointer_commands(&message, self) {
+            tracing::warn!(?err, "Failed to execute Sway keyboard command");
+        }
         match message {
             Message::SetAcceleration(value, touchpad) => {
                 let profile = if value {
