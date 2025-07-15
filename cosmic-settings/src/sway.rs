@@ -1,6 +1,7 @@
 use std::fs;
 use std::path::PathBuf;
 use std::io::Result as IoResult;
+use tracing::info;
 
 const CONFIGURATION_DIRECTORY: &str = "~/.config/regolith3/sway/cosmic-settings/generated-config.d";
 
@@ -15,6 +16,27 @@ const CONFIGURATION_DIRECTORY: &str = "~/.config/regolith3/sway/cosmic-settings/
 /// # Returns
 /// * `Ok(())` if the file was saved successfully
 /// * `Err(std::io::Error)` if there was an error creating directories or writing the file
+
+// Macro to handle Sway command execution with logging and config saving
+#[macro_export]
+macro_rules! execute_sway_cmd {
+    ($page:expr, $cmd:expr, $success_msg:expr, $config_file:expr, $config_content:expr) => {
+        match $page.sway_connection().run_command($cmd.clone()) {
+            Ok(_) => {
+                info!("{} via: swaymsg {}", $success_msg, &$cmd);
+                // Save the configuration to file for persistence
+                if let Err(e) = save_config($config_file, $config_content) {
+                    tracing::error!("Failed to save config file {}: {}", $config_file, e);
+                }
+            },
+            Err(e) => {
+                tracing::error!("Failed to execute command: {}", e);
+                return Err(e.into());
+            }
+        }
+    };
+}
+
 pub fn save_config(filename: &str, contents: &str) -> IoResult<()> {
     // Expand the tilde in the path
     let config_dir = if CONFIGURATION_DIRECTORY.starts_with('~') {

@@ -5,36 +5,9 @@ use tracing::info;
 pub type SwayResult<T = ()> = Result<T, Box<dyn Error>>;
 use crate::sway::save_config;
 
-// Macro to handle Sway command execution with logging and config saving
-macro_rules! execute_sway_cmd {
-    ($page:expr, $cmd:expr, $success_msg:expr, $config_file:expr, $config_content:expr) => {
-        match $page.sway_connection().run_command($cmd.clone()) {
-            Ok(_) => {
-                info!("{} via: swaymsg {}", $success_msg, &$cmd);
-                // Save the configuration to file for persistence
-                if let Err(e) = save_config($config_file, $config_content) {
-                    tracing::error!("Failed to save config file {}: {}", $config_file, e);
-                }
-            },
-            Err(e) => {
-                tracing::error!("Failed to execute command: {}", e);
-                return Err(e.into());
-            }
-        }
-    };
-}
+// Import the macro from the main sway module
+use crate::execute_sway_cmd;
 
-// pub enum Message {
-//     DisableWhileTyping(bool, bool),
-//     PrimaryButtonSelected(bool, bool), // Assuming first bool is left_handed, second is touchpad
-//     SetAcceleration(bool, bool),
-//     SetMouseSpeed(f64, bool),
-//     SetNaturalScroll(bool, bool),
-//     SetSecondaryClickBehavior(Option<ClickMethod>, bool),
-//     SetScrollFactor(f64, bool),
-//     SetScrollMethod(Option<ScrollMethod>, bool),
-//     TapToClick(bool),
-// }
 use super::Page;
 
 pub trait PointerMethods {
