@@ -2,7 +2,7 @@ use std::fs;
 use std::path::PathBuf;
 use std::io::Result as IoResult;
 
-const CONFIGURATION_DIRECTORY: &str = "~/.config/sway/config.d";
+const CONFIGURATION_DIRECTORY: &str = "~/.config/regolith3/sway/cosmic-settings/generated-config.d";
 
 /// Saves configuration content to a file in the Sway configuration directory.
 /// The file will be overwritten if it already exists.
@@ -33,7 +33,7 @@ pub fn save_config(filename: &str, contents: &str) -> IoResult<()> {
     fs::create_dir_all(&config_dir)?;
     
     // Automatically add .conf extension
-    let filename_with_ext = format!("{}.conf", filename);
+    let filename_with_ext = format!("{}", filename);
     
     // Create the full file path
     let file_path = config_dir.join(filename_with_ext);
